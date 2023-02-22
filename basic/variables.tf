@@ -10,23 +10,23 @@ variable "name" {
   default     = "aca"
 }
 
-variable "aca_sku" {
-  type        = string
-  description = "Azure Container App SKU"
-  default     = "Consumption"
-}
+#variable "aca_sku" {
+#  type        = string
+#  description = "Azure Container App SKU"
+#  default     = "Consumption"
+#}
 
-variable "azapi_version" {
-  type        = string
-  description = "Azure API version"
-  default     = "2022-06-01-preview"
-}
+#variable "azapi_version" {
+#  type        = string
+#  description = "Azure API version"
+#  default     = "2022-06-01-preview"
+#}
 
-variable "identity" {
-  type        = string
-  description = "Azure Container App identity"
-  default     = "SystemAssigned"
-}
+#variable "identity" {
+#  type        = string
+#  description = "Azure Container App identity"
+#  default     = "SystemAssigned"
+#
 
 variable "law_sku" {
   type        = string
