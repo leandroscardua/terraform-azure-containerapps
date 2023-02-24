@@ -1,7 +1,13 @@
+resource "azurerm_resource_group" "rg-db" {
+  name     = "${var.name}-rg-db"
+  location = var.location
+}
+
+
 resource "azurerm_postgresql_server" "postgresql_server" {
   name                = "${var.name}-postgresql-svr"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg-db.location
+  resource_group_name = azurerm_resource_group.rg-db.name
 
   sku_name = "B_Gen5_2"
 
@@ -17,13 +23,13 @@ resource "azurerm_postgresql_server" "postgresql_server" {
 
 
   depends_on = [
-    azurerm_resource_group.rg
+    azurerm_resource_group.rg-db
   ]
 }
 
 resource "azurerm_postgresql_database" "postgresql_database" {
   name                = "gitea"
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = azurerm_resource_group.rg-db.name
   server_name         = azurerm_postgresql_server.postgresql_server.name
   charset             = "UTF8"
   collation           = "English_United States.1252"
@@ -35,7 +41,7 @@ resource "azurerm_postgresql_database" "postgresql_database" {
 
 resource "azurerm_postgresql_firewall_rule" "postgresql_firewall_rule" {
   name                = "AllowAccesstoAzureServices"
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = azurerm_resource_group.rg-db.name
   server_name         = azurerm_postgresql_server.postgresql_server.name
   start_ip_address    = azurerm_container_app.aca_gitea.outbound_ip_addresses[0]
   end_ip_address      = azurerm_container_app.aca_gitea.outbound_ip_addresses[0]

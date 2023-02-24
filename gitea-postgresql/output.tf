@@ -1,5 +1,9 @@
-output "Resource_Group_Name" {
+output "Resource_Group_Name_ACA" {
   value = azurerm_resource_group.rg.name
+}
+
+output "Resource_Group_Name_DB" {
+  value = azurerm_resource_group.rg-db.name
 }
 
 output "Log_Analytics_Workspace_Name" {
