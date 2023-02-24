@@ -18,10 +18,10 @@ output "Container_App_Name_Wordpress" {
   value = azurerm_container_app.aca_gitea.name
 }
 
-output "Container_App_Name_url_wordpress" {
+output "Container_App_Name_Url_Wordpress" {
   value = azurerm_container_app.aca_gitea.ingress.*.fqdn
 }
 
-output "outbound_ip_addresses" {
+output "Container_App_Outbound_Ip_Addresses" {
   value = azurerm_container_app.aca_gitea.outbound_ip_addresses[0]
 }
