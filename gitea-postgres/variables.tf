@@ -7,7 +7,7 @@ variable "location" {
 variable "name" {
   type        = string
   description = "Azure Container App name"
-  default     = "aca8"
+  default     = "gitea"
 }
 
 variable "law_sku" {
@@ -27,4 +27,10 @@ variable "administrator_login_password" {
   description = "postgresql username"
   default     = ""
   sensitive   = true
+}
+
+variable "gitea_version" {
+  type        = string
+  description = "Log Analytics Workspace SKU"
+  default     = "1.19-dev"
 }

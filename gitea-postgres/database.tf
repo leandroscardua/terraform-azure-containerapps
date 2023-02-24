@@ -37,10 +37,11 @@ resource "azurerm_postgresql_firewall_rule" "postgresql_firewall_rule" {
   name                = "AllowAccesstoAzureServices"
   resource_group_name = azurerm_resource_group.rg.name
   server_name         = azurerm_postgresql_server.postgresql_server.name
-  start_ip_address    = "0.0.0.0"
-  end_ip_address      = "0.0.0.0"
+  start_ip_address    = azurerm_container_app.aca_gitea.outbound_ip_addresses[0]
+  end_ip_address      = azurerm_container_app.aca_gitea.outbound_ip_addresses[0]
 
   depends_on = [
-    azurerm_postgresql_database.postgresql_database
+    azurerm_postgresql_database.postgresql_database,
+    azurerm_container_app.aca_gitea
   ]
 }

@@ -32,16 +32,14 @@ resource "azurerm_container_app" "aca_gitea" {
   revision_mode                = "Single"
 
   template {
-    #max_replicas = 10
-    #min_replicas = 0
     container {
       name   = "gitea"
-      image  = "docker.io/gitea/gitea:latest"
+      image  = "docker.io/gitea/gitea:${var.gitea_version}"
       cpu    = 1.0
       memory = "2Gi"
       env {
         name  = "DB_HOST"
-        value = azurerm_postgresql_server.postgresql_server.fqdn
+        value = "${azurerm_postgresql_server.postgresql_server.fqdn}"
       }
       env {
         name  = "DB_USER"
@@ -59,6 +57,10 @@ resource "azurerm_container_app" "aca_gitea" {
       env {
         name  = "DB_TYPE"
         value = "postgres"
+      }
+      env {
+        name  = "ROOT_URL"
+        value = "https://${var.name}-gitea.${azurerm_container_app_environment.aca_env.default_domain}"
       }
     }
   }
@@ -83,3 +85,4 @@ resource "azurerm_container_app" "aca_gitea" {
     azurerm_postgresql_database.postgresql_database
   ]
 }
+
