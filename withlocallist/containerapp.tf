@@ -3,6 +3,28 @@ resource "azurerm_resource_group" "rg" {
   location = var.location
 }
 
+resource "azurerm_virtual_network" "vnet" {
+  name                = "${var.name}-vnet"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  address_space       = ["10.0.0.0/16"]
+  #dns_servers         = ["10.0.0.4", "10.0.0.5"]
+
+  depends_on = [azurerm_resource_group.rg]
+}
+
+
+
+resource "azurerm_subnet" "subnet" {
+  name                 = "${var.name}-subnet"
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.0.0/21"]
+
+  depends_on = [azurerm_virtual_network.vnet]
+}
+
+
 resource "azurerm_log_analytics_workspace" "law" {
   name                = "${var.name}-law"
   location            = azurerm_resource_group.rg.location
@@ -10,15 +32,18 @@ resource "azurerm_log_analytics_workspace" "law" {
   sku                 = var.law_sku
   retention_in_days   = 30
   depends_on = [
-    azurerm_resource_group.rg
+    azurerm_subnet.subnet
   ]
 }
 
 resource "azurerm_container_app_environment" "aca_env" {
-  name                       = "${var.name}-aca"
-  location                   = azurerm_resource_group.rg.location
-  resource_group_name        = azurerm_resource_group.rg.name
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+  name                           = "${var.name}-aca"
+  location                       = azurerm_resource_group.rg.location
+  resource_group_name            = azurerm_resource_group.rg.name
+  log_analytics_workspace_id     = azurerm_log_analytics_workspace.law.id
+  infrastructure_subnet_id       = azurerm_subnet.subnet.id
+  internal_load_balancer_enabled = true
+
 
   depends_on = [
     azurerm_log_analytics_workspace.law
@@ -26,29 +51,29 @@ resource "azurerm_container_app_environment" "aca_env" {
 }
 
 
- resource "azurerm_container_app" "aca" {
-   count                      = local.apps
-   name                         = "${each.key}"
-   container_app_environment_id = azurerm_container_app_environment.aca_env.id
-   resource_group_name          = azurerm_resource_group.rg.name
-   revision_mode                = "Single"
+resource "azurerm_container_app" "aca" {
+  for_each                     = local.apps
+  name                         = each.key
+  container_app_environment_id = azurerm_container_app_environment.aca_env.id
+  resource_group_name          = azurerm_resource_group.rg.name
+  revision_mode                = "Single"
 
-   template {
-     #max_replicas = 10
-     #min_replicas = 0
-     container {
-       name   = each.value.imagename
-       image  = each.value.image
-       cpu    = each.value.cpu
-       memory = each.value.memory
-     }
-   }
+  template {
+    max_replicas = each.value.maxReplicas
+    min_replicas = each.value.minReplicas
+    container {
+      name   = each.value.imagename
+      image  = each.value.image
+      cpu    = each.value.cpu
+      memory = each.value.memory
+    }
+  }
 
   ingress {
     allow_insecure_connections = false
-    target_port      = "3001"
-    external_enabled = true
-    transport        = "auto"
+    target_port                = each.value.targetPort
+    external_enabled           = true
+    transport                  = "auto"
     traffic_weight {
       latest_revision = true
       percentage      = 100
@@ -58,82 +83,10 @@ resource "azurerm_container_app_environment" "aca_env" {
   depends_on = [
     azurerm_container_app_environment.aca_env
   ]
-  
+
 
   timeouts {
-   create = "5m"
+    create = "5m"
   }
 
 }
-
-
-# resource "azapi_resource" "aca_env" {
-#   type      = "Microsoft.App/managedEnvironments@${var.azapi_version}"
-#   name      = "${var.name}-acae"
-#   parent_id = azurerm_resource_group.rg.id
-#   location  = azurerm_resource_group.rg.location
-
-#   body = jsonencode({
-#     properties = {
-#       appLogsConfiguration = {
-#         destination = "log-analytics"
-#         logAnalyticsConfiguration = {
-#           customerId = azurerm_log_analytics_workspace.law.workspace_id
-#           sharedKey  = azurerm_log_analytics_workspace.law.primary_shared_key
-#         }
-#       }
-#       zoneRedundant = false
-#     }
-#     sku = {
-#       name = var.aca_sku
-#     }
-#   })
-#   depends_on = [
-#     azurerm_log_analytics_workspace.law
-#   ]
-# }
-
-# resource "azapi_resource" "aca" {
-#   type      = "Microsoft.App/containerApps@${var.azapi_version}"
-#   name      = "${var.name}-001"
-#   parent_id = azurerm_resource_group.rg.id
-#   location  = azurerm_resource_group.rg.location
-#   identity {
-#     type         = var.identity
-#     identity_ids = []
-#   }
-
-
-#   body = jsonencode({
-#     properties = {
-#       managedEnvironmentId = azapi_resource.aca_env.id
-#       configuration = {
-#         ingress = {
-#           external : true
-#           targetPort : 3001
-#         },
-
-#       }
-#       template = {
-#         containers = [
-#           {
-#             image = "docker.io/louislam/uptime-kuma:latest"
-#             name  = "uptime-kuma"
-#             resources = {
-#               cpu    = 0.25
-#               memory = "0.5Gi"
-#             }
-#           }
-#         ]
-#         scale = {
-#           minReplicas = 1
-#           maxReplicas = 1
-#         }
-#       }
-#     }
-
-#   })
-#   depends_on = [
-#     azapi_resource.aca_env
-#   ]
-# }

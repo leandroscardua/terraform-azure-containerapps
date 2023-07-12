@@ -1,13 +1,13 @@
 variable "location" {
   type        = string
   description = "Location"
-  default     = "westeurope"
+  default     = "northeurope"
 }
 
 variable "name" {
   type        = string
   description = "Azure Container App name"
-  default     = "aca"
+  default     = "aca3"
 }
 
 #variable "aca_sku" {
